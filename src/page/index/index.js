@@ -17,7 +17,6 @@ const options = [
 ];
 
 function Index() {
-
   const history = useHistory();
 
   const [process, setProcess] = useState(options[0]);
@@ -25,21 +24,24 @@ function Index() {
   const [showTag, setShowTag] = useState(true);
 
   useEffect(() => {
-    const canvas = drawRoadmap(`roadmapCanvas`, roadMap[process.value], showTag);
-    canvas.on("mouse:down", (options) => {
+    const canvas = drawRoadmap(
+      `roadmapCanvas`,
+      roadMap[process.value],
+      showTag
+    );
+    // canvas.setHeight(process.canvasHeight);
+    const canvasMouseDownHandler = (options) => {
       if (options.target && options.target.link) {
         // 是否有跳转到markdown，从markdown返回的时候需要绘制一次
-        window.__GO_TO_MARKDOWN__ = true
+        window.__GO_TO_MARKDOWN__ = true;
         history.push(`/guide${options.target.link}`);
       }
-    });
+    };
+    canvas.on("mouse:down", canvasMouseDownHandler);
+    return () => {
+      canvas.off("mouse:down", canvasMouseDownHandler);
+    };
   }, [history, process, showTag]);
-
-  const onSelectProcess = useCallback(item => {
-    setProcess(item);
-    // TODO: 需要优化下每个卡片的y轴坐标，不应该是一个具体的值，应该改为距离上一个卡片的高度
-    // setHeight(canvasHeight); // TODO: canvas x,y 固定的，看怎么动态？  
-  }, []);
 
   const onShowTag = useCallback((value) => {
     setShowTag(value);
@@ -47,7 +49,9 @@ function Index() {
 
   const onDownloadImg = useCallback(() => {
     const $el = document.querySelector(".roadmap");
-    const downloadName = process.label.replace(/\uD83C[\uDF00-\uDFFF]|\uD83D[\uDC00-\uDE4F]/g, "").trim();
+    const downloadName = process.label
+      .replace(/\uD83C[\uDF00-\uDFFF]|\uD83D[\uDC00-\uDE4F]/g, "")
+      .trim();
     domtoimage.toJpeg($el).then(function (dataUrl) {
       const link = document.createElement("a");
       link.download = `roadmap-${downloadName}.jpeg`;
@@ -71,7 +75,7 @@ function Index() {
         <Select
           options={options}
           defaultValue={options[0]}
-          onChange={onSelectProcess}
+          onChange={setProcess}
           placeholder="请选择"
           className="process-select"
         />
@@ -85,9 +89,27 @@ function Index() {
           <div className="desc-container">
             <div className="explain-square">
               <div className="explain-content">
-                <div>1. ⭐️ - 推荐使用</div>
-                <div>2. ✅ - 备选方案</div>
-                <div>3. ❎ - 不推荐学习（技术已过时或其他原因）</div>
+                <div>
+                  1.{" "}
+                  <span role="img" aria-label="recommend">
+                    ⭐️
+                  </span>{" "}
+                  - 推荐使用
+                </div>
+                <div>
+                  2.{" "}
+                  <span role="img" aria-label="prepare">
+                    ✅
+                  </span>{" "}
+                  - 备选方案
+                </div>
+                <div>
+                  3.{" "}
+                  <span role="img" aria-label="no recommend">
+                    ❎
+                  </span>{" "}
+                  - 不推荐学习（技术已过时或其他原因）
+                </div>
                 <div>
                   4.
                   <span className="grey-card">xxxx</span> - 需要时再学
